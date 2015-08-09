@@ -1,4 +1,9 @@
 #!/usr/bin/php -f
+//===================================================================
+// shell script deploy tool 'spitiko'
+// coded by Oh-yake Hajime
+// 2015.08.09 ver 0.1
+//===================================================================
 <?php
 $sqlite = SQLite3::version();
 $sqlite_version = $sqlite['versionNumber'];
