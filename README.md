@@ -5,6 +5,7 @@
 0. PHP5
 0. GnuPG
 0. SQLite3
+0. json_decode
 
 が必要です。
 GnuPGと、SQLite3をPHPから使えるようになっている必要があります。
