@@ -61,6 +61,12 @@ switch ($command) {
     }
     break;
 
+  //=========
+  // unknown command
+  //=========
+  default:
+    echo "$command: command not found.\n";
+    break;
 }
 
 //===================================================================
