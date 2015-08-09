@@ -77,7 +77,7 @@ function search($packname) {
     $sth = $db->prepare($sql);
     $sth->execute();
   } catch (PDOException $e) {
-    echo "database error.\n(ex,'spitiko update')\n";
+    echo "database error.\nex)spitiko update\n";
     return;
   }
 
