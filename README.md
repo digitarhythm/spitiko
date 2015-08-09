@@ -1,7 +1,6 @@
 # spitiko
-install sh script
 
-シェルスクリプトをインストールします。
+シェルスクリプトをインストールします。--
 ・php-cli
 ・php-sqlite
 ・gnupg
