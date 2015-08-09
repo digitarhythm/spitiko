@@ -22,7 +22,7 @@ GnuPGと、SQLite3をPHPから使えるようになっている必要があり�
 
 コマンドの初回実行時に、
 
-**~/.spitiko**
+**~/.spitiko**  
 **~/.spitiko/script.d**
 
 のディレクトリと、
