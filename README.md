@@ -2,8 +2,8 @@
 
 シェルスクリプトをインストールします。
 
-・php5
-・GnuPG
+・php5  
+・GnuPG  
 ・SQLite3  
 
 が必要です。  
