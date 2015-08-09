@@ -1,10 +1,12 @@
 # spitiko
 
-シェルスクリプトをインストールします。--
-・php-cli
-・php-sqlite
-・gnupg
-・SQLite3
+シェルスクリプトをインストールします。
+
+・php-cli  
+・php-sqlite  
+・gnupg  
+・SQLite3  
+
 が必要です。
 事前準備として、私のGnuPG公開鍵「AF8C0606」をインストールする必要があります。
 
