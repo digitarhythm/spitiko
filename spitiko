@@ -1,0 +1,289 @@
+#!/usr/bin/php -f
+<?php
+$sqlite = SQLite3::version();
+$sqlite_version = $sqlite['versionNumber'];
+
+if (!isset($argv[1])) {
+  dispUsage($argv[0]);
+  exit;
+}
+$comname = $argv[0];
+
+$WORK_DIR = dirname(__FILE__);
+$USER_INFO = posix_getpwuid(posix_geteuid());
+$HOME = realpath($USER_INFO['dir']);
+$SPITIKO_DIR = $HOME."/.spitiko";
+$SPITIKO_SCRIPT = "$SPITIKO_DIR/script.d";
+$PACKAGE_FILE = "packageinfo.json.asc";
+$PACKAGE_DB_NAME = "$SPITIKO_DIR/spitikopackage.db";
+$SPITIKO_SH = getenv("SPITIKO_SH");
+if ($SPITIKO_SH == "") {
+  $SPITIKO_SH = "bash";
+}
+
+if (!is_dir($SPITIKO_DIR)) {
+  mkdir($SPITIKO_DIR);
+}
+if (!is_dir($SPITIKO_SCRIPT)) {
+  mkdir($SPITIKO_SCRIPT);
+}
+
+$command = $argv[1];
+switch ($command) {
+  //=========
+  // update
+  //=========
+  case "update":
+    update();
+    break;
+
+  //=========
+  // install
+  //=========
+  case "install":
+    if (isset($argv[2])) {
+      $packname = $argv[2];
+      $ret = install($packname);
+    } else {
+      dispUsage($comname);
+    }
+    break;
+
+  //=========
+  // search
+  //=========
+  case "search":
+    if (isset($argv[2])) {
+      $packname = $argv[2];
+      search($packname);
+    } else {
+      dispUsage($comname);
+    }
+    break;
+
+}
+
+//===================================================================
+// search
+//===================================================================
+function search($packname) {
+  global $PACKAGE_DB_NAME;
+  global $SPITIKO_SH;
+
+  $db = dbconnect($PACKAGE_DB_NAME);
+  $sql = "SELECT name,description,kind FROM packageinfo WHERE (name LIKE '%$packname%' OR description LIKE '%$packname%') AND kind='$SPITIKO_SH'";
+
+  $sth = $db->prepare($sql);
+  $sth->execute();
+
+  $result = $sth->fetchAll();
+
+  foreach ($result as $pack) {
+    echo $pack['name']." : ".$pack['description']."\n";
+  }
+
+  unset($db);
+}
+
+//===================================================================
+// install
+//===================================================================
+function install($packname) {
+  global $SPITIKO_SCRIPT;
+  global $PACKAGE_DB_NAME;
+
+  $db = dbconnect($PACKAGE_DB_NAME);
+  $sql = "SELECT * FROM packageinfo WHERE name='$packname'";
+  $sth = $db->prepare($sql);
+  $sth->execute();
+  $result = $sth->fetchAll();
+  if (count($result) == 0) {
+    echo "$packname: package not found.\n";
+    return 2; // package not found.
+  }
+
+  $uri = $result[0]['uri'];
+  $name = $result[0]['name'];
+  $version = $result[0]['version'];
+  $build = $result[0]['build'];
+  $kind = $result[0]['kind'];
+
+  $fname = "$uri/$kind/$name"."_".$version."_".$build.".asc";
+
+  $packstr = file_get_contents($fname);
+  $gnupg = gnupg_init();
+  $script = "";
+  $tmp = gnupg_verify($gnupg, $packstr, FALSE, $script);
+  $ret = $tmp[0];
+  
+  if ($ret['status'] != 0) {
+    $retcode = 1; // install error
+  } else {
+    $scriptfname = "$SPITIKO_SCRIPT/$name";
+    //if (is_file($scriptfname)) {
+    //  echo "$packname: Already installed.\n";
+    //  $retcode = 3; // already installed.
+    //} else {
+      file_put_contents($scriptfname, $script);
+      chmod($scriptfname, 0755);
+      $retcode = 0;
+      echo "$packname: install done.\n";
+    //}
+  }
+  return $retcode;
+}
+
+//===================================================================
+// disp usage
+//===================================================================
+function dispUsage($comname) {
+  echo basename($comname)." [command] [package name]\n";
+}
+
+//===================================================================
+// update
+//===================================================================
+function update() {
+  global $WORK_DIR;
+  global $SPITIKO_SCRIPT;
+  global $PACKAGE_DB_NAME;
+
+  $sourcefile = "$WORK_DIR/sources.list";
+  #echo "$sourcefile\n";
+  if (!is_file($sourcefile)) {
+    echo "sources.list is not found.\n";
+    exit;
+  }
+  $sourcelist = file($sourcefile);
+  $packarr = array();
+  foreach ($sourcelist as $packtmp) {
+    preg_match("/^(.*?)\s+(.*?)$/", $packtmp, $packdat);
+    $sh  = $packdat[1];
+    $uri = $packdat[2];
+    if (isset($packarr[$sh])) {
+      $arr = $packarr[$sh];
+      array_push($arr, $uri);
+      $packarr[$sh] = $arr;
+    } else {
+      $arr = array();
+      array_push($arr, $uri);
+      $packarr[$sh] = $arr;
+    }
+  }
+
+  $db = dbconnect($PACKAGE_DB_NAME);
+
+  // all clear packageinfo
+  try {
+    $sql = 'DROP TABLE packageinfo';
+    $ret = $db->query($sql);
+  } catch (PDOException $e) {
+    ;
+  }
+  $sql = "CREATE TABLE packageinfo(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, uri TEXT, version TEXT, build TEXT, date TEXT, author TEXT, kind TEXT, shver TEXT, ostype TEXT, description TEXT)";
+  $ret = $db->query($sql);
+
+  foreach ($packarr as $key => $pack) {
+    $result = 0;
+    foreach ($pack as $uri) {
+      echo "[$uri] - ";
+      $ret = getPackInfo($key, $uri, $db);
+      $err = $ret['err'];
+      $name = $ret['name'];
+      switch  ($err) {
+      case 0:
+        echo " - OK\n";
+        #$scriptfname = "$SPITIKO_SCRIPT/$name";
+        #file_put_contents($scriptfname, $script);
+        #chmod($scriptfname, 0755);
+        break;
+      case 4:
+        echo " - This file has been tampered with.\n";
+        $result = -1;
+        break;
+      case 128:
+        echo " - GPG Key could not be found.\n";
+        $result = -1;
+        break;
+      }
+    }
+  }
+
+  unset($db);
+}
+
+//===================================================================
+// getPackInfo
+//===================================================================
+function getPackInfo($sh, $uri, $db) {
+  global $PACKAGE_FILE;
+  $script = "";
+  $retcode = 0;
+  $name = "";
+
+  $gnupg = gnupg_init();
+  $packagetmp = file_get_contents("$uri/$PACKAGE_FILE");
+  $retstr = "";
+  $tmp = gnupg_verify($gnupg, $packagetmp, FALSE, $retstr);
+  $ret = $tmp[0];
+  if ($ret['status'] != 0) {
+    $retcode = $ret['summary'];
+    switch ($retcode) {
+    case "4": // Data has been tampered with.
+      //echo "\"$uri\" package info file has been tampered with.\n";
+      break;
+    case "128": // Don't import GPG Key.
+      #$ret = passthru("gpg --keyserver $keyserver --recv '$key' > /dev/null  2>&1");
+      //echo "GPG Key '".$key."' could not be found.\n";
+      break;
+    }
+  } else {
+    $packlist = $retstr;
+  }
+
+  if ($retcode == 0) {
+    $packagedata = json_decode($packlist);
+    foreach ($packagedata as $key => $obj) {
+      $name = $key;
+      // get package info
+      $version      = $obj->version;
+      $build        = $obj->build;
+      $date         = $obj->date;
+      $author       = $obj->author;
+      $kind         = $obj->kind;
+      $shver        = $obj->shver;
+      $ostype       = $obj->ostype;
+      $description  = $obj->description;
+      // Data is I do check not been tampered with.
+      $fname = "$uri/$kind/$name"."_".$version."_".$build.".asc";
+      $packstr = file_get_contents($fname);
+      $tmp = gnupg_verify($gnupg, $packstr, FALSE);
+      $ret = $tmp[0];
+      #print_r($ret);
+      
+      if ($ret['status'] != 0) {
+        $retcode = $ret['summary'];
+      } else {
+        $sth = $db->prepare("INSERT INTO packageinfo values(NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $forKey = array($name, $uri, $version, $build, $date, $author, $kind, $shver, $ostype, $description);
+        $sth->execute($forKey);
+      }
+    }
+  }
+
+  return array("err" => $retcode, "name" => $name);
+}
+
+//===================================================================
+// create db connect
+//===================================================================
+function dbconnect($dbname) {
+  try {
+    $db = new PDO('sqlite:'.$dbname);
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  } catch (PDOException $e) {
+    die ('Connection failed : '.$e->getMessage());
+  }
+  return $db;
+}
+?>
