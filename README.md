@@ -1,0 +1,2 @@
+# spitiko
+install sh script
