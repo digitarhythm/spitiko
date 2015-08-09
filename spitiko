@@ -73,8 +73,13 @@ function search($packname) {
   $db = dbconnect($PACKAGE_DB_NAME);
   $sql = "SELECT name,description,kind FROM packageinfo WHERE (name LIKE '%$packname%' OR description LIKE '%$packname%') AND kind='$SPITIKO_SH'";
 
-  $sth = $db->prepare($sql);
-  $sth->execute();
+  try {
+    $sth = $db->prepare($sql);
+    $sth->execute();
+  } catch (PDOException $e) {
+    echo "database error.\n(ex,'spitiko update')\n";
+    return;
+  }
 
   $result = $sth->fetchAll();
   if (count($result) > 0) {
