@@ -35,12 +35,12 @@ GnuPGと、SQLite3をPHPから使えるようになっている必要があり�
 
 #使い方
 
-**$ spitiko update**
+**$ spitiko update**  
 インストールする事が出来るスクリプトのデータベースを更新します。
 
-**$ spitiko search [string]**
+**$ spitiko search [string]**  
 指定した文字列で、スクリプト名と説明を検索して、ヒットしたものを表示します。
 
-**$ spitiko install [script name]**
+**$ spitiko install [script name]**  
 指定したスクリプトをインストールします。
 
