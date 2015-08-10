@@ -105,20 +105,16 @@ function dispDescription($packname) {
 
   $name = $result[0]['name'];
   $version = $result[0]['version'];
-  $build = $result[0]['build'];
   $date = $result[0]['date'];
   $author = $result[0]['author'];
-  $shver = $result[0]['shver'];
   $kind = $result[0]['kind'];
-  $ostype = $result[0]['ostype'];
   $desc = $result[0]['description'];
 
   printf("%12s|%s\n", "name", $name);
   printf("%12s|%s\n", "version", $version);
   printf("%12s|%s\n", "date", $date);
   printf("%12s|%s\n", "author", $author);
-  printf("%12s|%s\n", "sh version", $shver);
-  printf("%12s|%s\n", "sh kind", $kind);
+  printf("%12s|%s\n", "script type", $kind);
   printf("%12s|%s\n", "description", $desc);
 }
 
