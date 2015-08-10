@@ -69,7 +69,7 @@ switch ($command) {
   //=========
   // description
   //=========
-  case "-v":
+  case "desc":
     if (isset($argv[2])) {
       $packname = $argv[2];
       dispDescription($packname);
@@ -205,6 +205,11 @@ function install($packname) {
 //===================================================================
 function dispUsage($comname) {
   echo basename($comname)." [command] [package name]\n";
+  echo "[command]\n";
+  echo "update  : update package database.\n";
+  echo "search  : search package.\n";
+  echo "install : install package.\n";
+  echo "desc    : disp package desctiption.\n";
 }
 
 //===================================================================
