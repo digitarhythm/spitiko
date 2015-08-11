@@ -69,7 +69,7 @@ switch ($command) {
   //=========
   // description
   //=========
-  case "desc":
+  case "info":
     if (isset($argv[2])) {
       $packname = $argv[2];
       dispDescription($packname);
