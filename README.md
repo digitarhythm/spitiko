@@ -46,6 +46,9 @@ GnuPGと、SQLite3をPHPから使えるようになっている必要があり�
 **$ spitiko install [script name]**  
 指定したスクリプトをインストールします。
 
+**$ spitiko info [script name]**  
+指定したスクリプトの情報を表示する。
+
 #現在登録されているスクリプト
 
 0. trash: ファイルを「~/.Trash」に移動するスクリプト
