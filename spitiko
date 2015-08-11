@@ -248,7 +248,7 @@ function update() {
   } catch (PDOException $e) {
     ;
   }
-  $sql = "CREATE TABLE packageinfo(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, uri TEXT, version TEXT, build TEXT, date TEXT, author TEXT, kind TEXT, shver TEXT, ostype TEXT, description TEXT)";
+  $sql = "CREATE TABLE packageinfo(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, uri TEXT, version TEXT, build TEXT, date TEXT, author TEXT, kind TEXT, shver TEXT, ostype TEXT, description TEXT, dependent TEXT)";
   $ret = $db->query($sql);
 
   foreach ($packarr as $key => $pack) {
@@ -322,6 +322,7 @@ function getPackInfo($sh, $uri, $db) {
       $shver        = $obj->shver;
       $ostype       = $obj->ostype;
       $description  = $obj->description;
+      $dependent    = $obj->dependent;
       // Data is I do check not been tampered with.
       $fname = "$uri/$kind/$name"."_".$version."_".$build.".asc";
       $packstr = file_get_contents($fname);
@@ -332,8 +333,8 @@ function getPackInfo($sh, $uri, $db) {
       if ($ret['status'] != 0) {
         $retcode = $ret['summary'];
       } else {
-        $sth = $db->prepare("INSERT INTO packageinfo values(NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $forKey = array($name, $uri, $version, $build, $date, $author, $kind, $shver, $ostype, $description);
+        $sth = $db->prepare("INSERT INTO packageinfo values(NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $forKey = array($name, $uri, $version, $build, $date, $author, $kind, $shver, $ostype, $description, $dependent);
         $sth->execute($forKey);
       }
     }
