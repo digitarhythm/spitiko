@@ -260,7 +260,7 @@ function update() {
       $name = $ret['name'];
       switch  ($err) {
       case 0:
-        echo " - OK\n";
+        echo "OK\n";
         #$scriptfname = "$SPITIKO_SCRIPT/$name";
         #file_put_contents($scriptfname, $script);
         #chmod($scriptfname, 0755);
