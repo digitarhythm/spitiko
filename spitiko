@@ -82,7 +82,7 @@ switch ($command) {
   // unknown command
   //=========
   default:
-    echo "$command: command not found.\n";
+    printf("%s: command not found.\n", $command);
     break;
 }
 
@@ -99,7 +99,7 @@ function dispDescription($packname) {
   $sth->execute();
   $result = $sth->fetchAll();
   if (count($result) == 0) {
-    echo "$packname: package not found.\n";
+    printf("%s: package not found.\n", $packname);
     return 2; // package not found.
   }
 
@@ -132,17 +132,17 @@ function search($packname) {
     $sth = $db->prepare($sql);
     $sth->execute();
   } catch (PDOException $e) {
-    echo "database error.\nex)spitiko update\n";
+    printf("database error.\nex)spitiko update\n");
     return;
   }
 
   $result = $sth->fetchAll();
   if (count($result) > 0) {
     foreach ($result as $pack) {
-      echo $pack['name']." : ".$pack['description']."\n";
+      printf("%s : %s\n",  $pack['name'], $pack['description']);
     }
   } else {
-    echo "script not found.\n";
+    printf("script not found.\n");
   }
 
   unset($db);
@@ -161,7 +161,7 @@ function install($packname) {
   $sth->execute();
   $result = $sth->fetchAll();
   if (count($result) == 0) {
-    echo "$packname: package not found.\n";
+    printf("%s: package not found.\n", $packname);
     return 2; // package not found.
   }
 
@@ -184,13 +184,13 @@ function install($packname) {
   } else {
     $scriptfname = "$SPITIKO_SCRIPT/$name";
     //if (is_file($scriptfname)) {
-    //  echo "$packname: Already installed.\n";
+    //  printf("$packname: Already installed.\n");
     //  $retcode = 3; // already installed.
     //} else {
       file_put_contents($scriptfname, $script);
       chmod($scriptfname, 0755);
       $retcode = 0;
-      echo "$packname: install done.\n";
+      printf("%s: install done.\n", $packname);
     //}
   }
   return $retcode;
@@ -200,12 +200,12 @@ function install($packname) {
 // disp usage
 //===================================================================
 function dispUsage($comname) {
-  echo basename($comname)." [command] [package name]\n";
-  echo "[command]\n";
-  echo "update  : update package database.\n";
-  echo "search  : search package.\n";
-  echo "install : install package.\n";
-  echo "desc    : disp package desctiption.\n";
+  printf("%s [command] [package name]\n", basename($comname));
+  printf("[command]\n");
+  printf("update  : update package database.\n");
+  printf("search  : search package.\n");
+  printf("install : install package.\n");
+  printf("desc    : disp package desctiption.\n");
 }
 
 //===================================================================
@@ -217,9 +217,9 @@ function update() {
   global $PACKAGE_DB_NAME;
 
   $sourcefile = "$WORK_DIR/sources.list";
-  #echo "$sourcefile\n";
+  #printf("$sourcefile\n");
   if (!is_file($sourcefile)) {
-    echo "sources.list is not found.\n";
+    printf("sources.list is not found.\n");
     exit;
   }
   $sourcelist = file($sourcefile);
@@ -254,23 +254,23 @@ function update() {
   foreach ($packarr as $key => $pack) {
     $result = 0;
     foreach ($pack as $uri) {
-      echo "Get [$uri] - ";
+      printf("Get [%s] - ", $uri);
       $ret = getPackInfo($key, $uri, $db);
       $err = $ret['err'];
       $name = $ret['name'];
       switch  ($err) {
       case 0:
-        echo "OK\n";
+        printf("OK\n");
         #$scriptfname = "$SPITIKO_SCRIPT/$name";
         #file_put_contents($scriptfname, $script);
         #chmod($scriptfname, 0755);
         break;
       case 4:
-        echo " - This file has been tampered with.\n";
+        printf(" - This file has been tampered with.\n");
         $result = -1;
         break;
       case 128:
-        echo " - GPG Key could not be found.\n";
+        printf(" - GPG Key could not be found.\n");
         $result = -1;
         break;
       }
@@ -298,11 +298,11 @@ function getPackInfo($sh, $uri, $db) {
     $retcode = $ret['summary'];
     switch ($retcode) {
     case "4": // Data has been tampered with.
-      //echo "\"$uri\" package info file has been tampered with.\n";
+      //printf("\"$uri\" package info file has been tampered with.\n");
       break;
     case "128": // Don't import GPG Key.
       #$ret = passthru("gpg --keyserver $keyserver --recv '$key' > /dev/null  2>&1");
-      //echo "GPG Key '".$key."' could not be found.\n";
+      //printf("GPG Key '".$key."' could not be found.\n");
       break;
     }
   } else {
