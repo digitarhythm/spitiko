@@ -254,7 +254,7 @@ function update() {
   foreach ($packarr as $key => $pack) {
     $result = 0;
     foreach ($pack as $uri) {
-      echo "[$uri] - ";
+      echo "Get [$uri] - ";
       $ret = getPackInfo($key, $uri, $db);
       $err = $ret['err'];
       $name = $ret['name'];
