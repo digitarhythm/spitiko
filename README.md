@@ -2,7 +2,7 @@
 
 **spitiko**を使うためには、  
 
-0. PHP5
+0. PHP
 0. GnuPG
 0. SQLite3
 
